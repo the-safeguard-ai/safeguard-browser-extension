@@ -1,0 +1,21 @@
+{
+  "name": "safeguard-browser-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SafeGuard AI browser extension (MV3): in-browser DLP redaction and network egress backstop for AI tools.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-safeguard/safeguard-browser-extension.git"
+  },
+  "scripts": {
+    "build": "bun run build.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "typescript": "5.7.3"
+  }
+}

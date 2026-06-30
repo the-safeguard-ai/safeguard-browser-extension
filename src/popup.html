@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body { width: 300px; margin: 0; font: 13px system-ui, sans-serif; background: #0f0f10; color: #eee; }
+      header { display: flex; align-items: center; gap: 8px; padding: 14px; border-bottom: 1px solid #2a2a2c; }
+      .logo { width: 24px; height: 24px; border-radius: 6px; background: #4f46e5; display: grid; place-items: center; font-weight: 700; font-size: 11px; color: #fff; }
+      .body { padding: 14px; }
+      .stat { display: flex; justify-content: space-between; padding: 6px 0; }
+      .muted { color: #9a9a9e; }
+      .big { font-size: 28px; font-weight: 700; }
+      a { color: #818cf8; cursor: pointer; }
+      .row { margin-top: 10px; }
+      input, select { width: 100%; box-sizing: border-box; padding: 8px 9px; margin-top: 6px; border: 1px solid #2a2a2c; border-radius: 8px; background: #1a1a1c; color: #eee; }
+      button.primary { width: 100%; margin-top: 10px; background: #4f46e5; color: #fff; border: 0; padding: 9px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+      .err { color: #f87171; margin-top: 8px; font-size: 12px; }
+      .hide { display: none; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">SG</div>
+      <strong>SafeGuard</strong>
+    </header>
+
+    <!-- Signed out: simple login -->
+    <div class="body hide" id="login-view">
+      <div class="muted">Sign in to link this browser to your organization.</div>
+      <input id="email" type="email" placeholder="Work email" />
+      <input id="password" type="password" placeholder="Password" />
+      <button class="primary" id="signin">Sign in</button>
+      <div class="err hide" id="error"></div>
+      <div class="row"><a id="options-link">Advanced / IT setup</a></div>
+    </div>
+
+    <!-- Signed in: stats -->
+    <div class="body hide" id="main-view">
+      <div class="muted" id="org"></div>
+      <div class="muted" style="margin-top:10px">Sensitive items caught</div>
+      <div class="big" id="total">0</div>
+      <div id="breakdown" class="row"></div>
+      <div class="row"><span id="status" class="muted"></span></div>
+      <div class="row"><a id="signout">Sign out</a> · <a id="options-link2">Settings</a></div>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
