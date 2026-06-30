@@ -7,7 +7,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/the-safeguard/safeguard-browser-extension.git"
+    "url": "git+https://github.com/the-safeguard-ai/safeguard-browser-extension.git"
   },
   "scripts": {
     "build": "bun run build.ts",
