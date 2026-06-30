@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/chrome": "^0.0.287",
     "typescript": "5.7.3"
   }
