@@ -1,15 +1,30 @@
 import { getAuth, login, logout } from "./auth";
 import { clearOrgPolicy, syncOrgPolicy } from "./policy";
-import { getConfig } from "./config";
+import { getConfig, setConfig, type Deployment } from "./config";
 
 const $ = (id: string) => document.getElementById(id)!;
 const show = (id: string, on: boolean) => $(id).classList.toggle("hide", !on);
 
+/** Show only the input relevant to the selected deployment. */
+function reflectDeployment(dep: Deployment) {
+  show("cloudRow", dep === "cloud");
+  show("orgRow", dep === "organization");
+  show("selfRow", dep === "self-hosted");
+}
+
 async function render() {
   const auth = await getAuth();
   const cfg = await getConfig();
-  const itMode = !auth && !!cfg.orgKey;
 
+  // Connection section
+  ($("deployment") as HTMLSelectElement).value = cfg.deployment;
+  ($("orgUrl") as HTMLInputElement).value = cfg.orgUrl;
+  ($("selfHostUrl") as HTMLInputElement).value = cfg.selfHostUrl;
+  reflectDeployment(cfg.deployment);
+  $("endpoint").textContent =
+    cfg.deployment === "cloud" ? "Protected via SafeGuard Cloud" : `Connected to ${cfg.controlPlaneUrl}`;
+
+  const itMode = !auth && !!cfg.orgKey;
   show("login-view", !auth && !itMode);
   show("main-view", !!auth || itMode);
 
@@ -29,6 +44,23 @@ async function render() {
     show("signout", !!auth);
   }
 }
+
+$("deployment").addEventListener("change", () => {
+  reflectDeployment(($("deployment") as HTMLSelectElement).value as Deployment);
+});
+
+$("saveConn").addEventListener("click", async () => {
+  const deployment = ($("deployment") as HTMLSelectElement).value as Deployment;
+  await setConfig({
+    deployment,
+    orgUrl: ($("orgUrl") as HTMLInputElement).value.trim(),
+    selfHostUrl: ($("selfHostUrl") as HTMLInputElement).value.trim(),
+  });
+  show("connSaved", true);
+  setTimeout(() => show("connSaved", false), 1800);
+  void syncOrgPolicy(); // re-pull policy from the new endpoint
+  await render();
+});
 
 $("signin").addEventListener("click", async () => {
   const email = ($("email") as HTMLInputElement).value.trim();

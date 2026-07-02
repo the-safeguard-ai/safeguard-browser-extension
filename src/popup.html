@@ -3,45 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <style>
-      body { width: 300px; margin: 0; font: 13px system-ui, sans-serif; background: #0f0f10; color: #eee; }
-      header { display: flex; align-items: center; gap: 8px; padding: 14px; border-bottom: 1px solid #2a2a2c; }
-      .logo { width: 24px; height: 24px; border-radius: 6px; background: #4f46e5; display: grid; place-items: center; font-weight: 700; font-size: 11px; color: #fff; }
+      :root { --accent: #2fd06a; --bg: #0a0b0c; --surface: #17181a; --border: #2a2a2c; --muted: #9a9a9e; }
+      body { width: 320px; margin: 0; font: 13px system-ui, sans-serif; background: var(--bg); color: #eee; }
+      header { display: flex; align-items: center; gap: 8px; padding: 14px; border-bottom: 1px solid var(--border); }
+      header strong { letter-spacing: -0.01em; }
       .body { padding: 14px; }
       .stat { display: flex; justify-content: space-between; padding: 6px 0; }
-      .muted { color: #9a9a9e; }
+      .muted { color: var(--muted); }
       .big { font-size: 28px; font-weight: 700; }
-      a { color: #818cf8; cursor: pointer; }
-      .row { margin-top: 10px; }
-      input, select { width: 100%; box-sizing: border-box; padding: 8px 9px; margin-top: 6px; border: 1px solid #2a2a2c; border-radius: 8px; background: #1a1a1c; color: #eee; }
-      button.primary { width: 100%; margin-top: 10px; background: #4f46e5; color: #fff; border: 0; padding: 9px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+      a { color: var(--accent); cursor: pointer; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      label { display:block; font-weight:600; margin-bottom: 4px; }
+      .row { margin-top: 12px; }
+      .hint { color: var(--muted); font-size: 11.5px; margin-top: 5px; line-height: 1.4; }
+      input, select { width: 100%; box-sizing: border-box; padding: 8px 9px; margin-top: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: #eee; }
+      select:focus, input:focus { outline: none; border-color: var(--accent); }
+      button.primary { width: 100%; margin-top: 12px; background: var(--accent); color: #05130a; border: 0; padding: 9px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+      button.primary:hover { filter: brightness(1.05); }
       .err { color: #f87171; margin-top: 8px; font-size: 12px; }
+      .ok { color: var(--accent); font-size: 12px; margin-top: 8px; }
+      hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
       .hide { display: none; }
+      .pill { display:inline-block; padding:2px 8px; border-radius:999px; background: rgba(47,208,106,.14); color: var(--accent); font-size: 11px; font-weight:600; }
     </style>
   </head>
   <body>
     <header>
-      <div class="logo">SG</div>
-      <strong>SafeGuard</strong>
+      <svg width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M16 2.5l11 4.2v8.1c0 7.1-4.7 12.9-11 14.7C9.7 27.7 5 21.9 5 14.8V6.7L16 2.5z" fill="#2fd06a" fill-opacity="0.16" stroke="#2fd06a" stroke-width="1.6"/>
+        <rect x="10" y="14.2" width="12" height="3.4" rx="1.7" fill="#2fd06a"/>
+        <path d="M11.5 11.2h5.5M11.5 20.4h9" stroke="#2fd06a" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+      </svg>
+      <strong>SafeGuard AI</strong>
     </header>
 
-    <!-- Signed out: simple login -->
-    <div class="body hide" id="login-view">
-      <div class="muted">Sign in to link this browser to your organization.</div>
-      <input id="email" type="email" placeholder="Work email" />
-      <input id="password" type="password" placeholder="Password" />
-      <button class="primary" id="signin">Sign in</button>
-      <div class="err hide" id="error"></div>
-      <div class="row"><a id="options-link">Advanced / IT setup</a></div>
-    </div>
+    <div class="body">
+      <!-- Connection: pick how this browser reaches SafeGuard -->
+      <label for="deployment">Connection</label>
+      <select id="deployment">
+        <option value="cloud">Individual — SafeGuard Cloud</option>
+        <option value="organization">My organization</option>
+        <option value="self-hosted">Self-hosted server</option>
+      </select>
 
-    <!-- Signed in: stats -->
-    <div class="body hide" id="main-view">
-      <div class="muted" id="org"></div>
-      <div class="muted" style="margin-top:10px">Sensitive items caught</div>
-      <div class="big" id="total">0</div>
-      <div id="breakdown" class="row"></div>
-      <div class="row"><span id="status" class="muted"></span></div>
-      <div class="row"><a id="signout">Sign out</a> · <a id="options-link2">Settings</a></div>
+      <div class="row hide" id="cloudRow">
+        <div class="hint">Nothing to set up — your prompts are protected via SafeGuard Cloud.</div>
+      </div>
+      <div class="row hide" id="orgRow">
+        <input id="orgUrl" placeholder="acme   or   https://acme.thesafeguard.ai" />
+        <div class="hint">The URL or slug your SafeGuard admin gave you.</div>
+      </div>
+      <div class="row hide" id="selfRow">
+        <input id="selfHostUrl" placeholder="http://localhost:8081" />
+        <div class="hint">Your SafeGuard server address (the control-plane URL).</div>
+      </div>
+
+      <button class="primary" id="saveConn">Save connection</button>
+      <div class="ok hide" id="connSaved">Connected ✓</div>
+      <div class="hint" id="endpoint"></div>
+
+      <hr />
+
+      <!-- Signed out: simple login -->
+      <div id="login-view" class="hide">
+        <div class="muted">Sign in to sync your organization's policy.</div>
+        <div class="row"><input id="email" type="email" placeholder="Work email" /></div>
+        <input id="password" type="password" placeholder="Password" />
+        <button class="primary" id="signin">Sign in</button>
+        <div class="err hide" id="error"></div>
+        <div class="row"><a id="options-link">Advanced / IT setup</a></div>
+      </div>
+
+      <!-- Signed in / linked: stats -->
+      <div id="main-view" class="hide">
+        <div class="muted" id="org"></div>
+        <div class="muted" style="margin-top:10px">Sensitive items caught</div>
+        <div class="big" id="total">0</div>
+        <div id="breakdown" class="row"></div>
+        <div class="row"><span id="status" class="muted"></span></div>
+        <div class="row"><a id="signout">Sign out</a> · <a id="options-link2">Settings</a></div>
+      </div>
     </div>
 
     <script type="module" src="popup.js"></script>

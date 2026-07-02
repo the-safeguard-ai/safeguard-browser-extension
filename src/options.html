@@ -3,44 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <style>
-      body { max-width: 520px; margin: 40px auto; font: 14px system-ui, sans-serif; color: #1a1a1a; padding: 0 20px; }
-      h1 { font-size: 20px; }
-      label { display: block; margin: 18px 0 6px; font-weight: 600; }
+      :root { --accent: #16a34a; }
+      body { max-width: 560px; margin: 40px auto; font: 14px system-ui, sans-serif; color: #1a1a1a; padding: 0 20px; }
+      h1 { font-size: 20px; display:flex; align-items:center; gap:10px; }
+      h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color:#666; margin-top: 30px; }
+      label { display: block; margin: 16px 0 6px; font-weight: 600; }
       input, select { width: 100%; padding: 9px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+      select:focus, input:focus { outline: none; border-color: var(--accent); }
       .hint { color: #666; font-size: 12px; margin-top: 4px; }
-      button { margin-top: 24px; background: #4f46e5; color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; }
-      .saved { color: #16a34a; margin-left: 12px; }
+      .checkline { display:flex; align-items:center; gap:8px; margin-top:16px; font-weight:600; }
+      .checkline input { width: auto; }
+      button { margin-top: 26px; background: var(--accent); color: #fff; border: 0; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+      .saved { color: var(--accent); margin-left: 12px; font-weight:600; }
+      .hide { display: none; }
     </style>
   </head>
   <body>
-    <h1>SafeGuard — Settings</h1>
-    <label>Enforcement mode</label>
+    <h1>
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M16 2.5l11 4.2v8.1c0 7.1-4.7 12.9-11 14.7C9.7 27.7 5 21.9 5 14.8V6.7L16 2.5z" fill="#16a34a" fill-opacity="0.14" stroke="#16a34a" stroke-width="1.6"/>
+        <rect x="10" y="14.2" width="12" height="3.4" rx="1.7" fill="#16a34a"/>
+      </svg>
+      SafeGuard AI — Settings
+    </h1>
+
+    <h2>Connection</h2>
+    <label>Deployment</label>
+    <select id="deployment">
+      <option value="cloud">Individual — SafeGuard Cloud (no setup)</option>
+      <option value="organization">My organization (SaaS tenant)</option>
+      <option value="self-hosted">Self-hosted server</option>
+    </select>
+
+    <div id="orgRow" class="hide">
+      <label>Organization URL or slug</label>
+      <input id="orgUrl" placeholder="acme   or   https://acme.thesafeguard.ai" />
+      <div class="hint">Provided by your SafeGuard admin. A bare slug becomes <code>https://&lt;slug&gt;.thesafeguard.ai</code>.</div>
+    </div>
+    <div id="selfRow" class="hide">
+      <label>Server URL (control-plane)</label>
+      <input id="selfHostUrl" placeholder="http://localhost:8081" />
+      <div class="hint">The address of your self-hosted SafeGuard control-plane.</div>
+    </div>
+    <div class="hint" id="endpoint" style="margin-top:10px"></div>
+
+    <h2>Enforcement</h2>
+    <label>Mode</label>
     <select id="mode">
       <option value="redact">Redact — strip sensitive data, allow the prompt</option>
       <option value="block">Block — stop prompts containing sensitive data</option>
       <option value="flag">Educate — warn but allow</option>
     </select>
 
-    <label>Control-plane URL</label>
-    <input id="controlPlaneUrl" placeholder="http://localhost:8081" />
-    <div class="hint">Where Shadow AI events are reported. Leave blank for local-only mode.</div>
-
-    <label>Organization key</label>
+    <label>Organization key <span class="hint" style="font-weight:400">(optional)</span></label>
     <input id="orgKey" placeholder="sg_..." />
-    <div class="hint">Enrollment key from your SafeGuard admin (authenticates telemetry).</div>
+    <div class="hint">Enrollment key from your SafeGuard admin for zero-touch IT rollout (authenticates telemetry without sign-in).</div>
 
-    <label><input type="checkbox" id="enabled" style="width:auto" /> Protection enabled</label>
-
-    <label><input type="checkbox" id="egressGuard" style="width:auto" /> Network egress backstop</label>
+    <div class="checkline"><input type="checkbox" id="enabled" /> Protection enabled</div>
+    <div class="checkline"><input type="checkbox" id="egressGuard" /> Network egress backstop</div>
     <div class="hint">
-      Fail-safe that inspects outgoing network requests and blocks any that still
-      carry sensitive data (in case the on-page redaction is bypassed). Detect-and-block
-      only — it never edits request contents. In Educate mode it warns without blocking.
+      Extra fail-safe that inspects the outgoing prompt request and, under a Block
+      policy, stops it if sensitive data slipped past the on-page redaction. Only
+      inspects the AI site's chat endpoint; never edits request contents.
     </div>
 
     <div>
       <button id="save">Save</button>
-      <span id="saved" class="saved" style="display:none">Saved ✓</span>
+      <span id="saved" class="saved hide">Saved ✓</span>
     </div>
     <script type="module" src="options.js"></script>
   </body>

@@ -30,5 +30,6 @@ if (!result.success) {
 await cp(`${root}/manifest.json`, `${dist}/manifest.json`);
 await cp(`${root}/src/popup.html`, `${dist}/popup.html`);
 await cp(`${root}/src/options.html`, `${dist}/options.html`);
+await cp(`${root}/icons`, `${dist}/icons`, { recursive: true });
 
 console.log("✓ Extension built → dist/  (load unpacked in chrome://extensions)");

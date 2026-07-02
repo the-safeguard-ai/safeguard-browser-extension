@@ -4,6 +4,12 @@
   "version": "0.1.0",
   "description": "Detects and redacts sensitive data before it leaves your browser when using AI tools (ChatGPT, Grok, Gemini, Claude, and many more).",
   "permissions": ["storage"],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
@@ -40,7 +46,16 @@
     "http://localhost:8081/*"
   ],
   "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_popup": "popup.html", "default_title": "SafeGuard" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SafeGuard AI",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
   "options_page": "options.html",
   "content_scripts": [
     {
