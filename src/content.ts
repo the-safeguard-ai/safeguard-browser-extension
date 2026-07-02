@@ -50,7 +50,7 @@ async function init(site: SiteConfig) {
       try {
         cfg = await getConfig();
         ({ policies, mode } = resolvePolicies(await getCachedOrgPolicy(), cfg.mode));
-        pushEgressConfig(cfg, mode); // keep the MAIN-world backstop in sync
+        pushEgressConfig(cfg, mode, site.apiIncludes ?? []); // keep the MAIN-world backstop in sync
       } catch {
         /* context gone — keep cached policy */
       }
@@ -62,7 +62,7 @@ async function init(site: SiteConfig) {
   // ── Network egress backstop bridge ──────────────────────────────────────────
   // egress.ts runs in the MAIN world and can't read chrome.storage, so we push
   // config to it and relay its block/flag events into telemetry + a banner.
-  pushEgressConfig(cfg, mode);
+  pushEgressConfig(cfg, mode, site.apiIncludes ?? []);
   window.addEventListener("message", (e: MessageEvent) => {
     if (e.source !== window) return;
     const d = e.data as
@@ -70,7 +70,7 @@ async function init(site: SiteConfig) {
       | null;
     if (!d || typeof d.__safeguard !== "string") return;
     if (d.__safeguard === "egress-ready") {
-      pushEgressConfig(cfg, mode); // it loaded/reloaded — (re)send config
+      pushEgressConfig(cfg, mode, site.apiIncludes ?? []); // it loaded/reloaded — (re)send config
     } else if (d.__safeguard === "egress-event") {
       const labels = d.labels ?? [];
       const count = d.count ?? labels.length;
@@ -220,8 +220,9 @@ function replaceAll(el: HTMLElement, text: string) {
 }
 
 /** Push current config to the MAIN-world egress backstop via postMessage. The
- *  enforcement `mode` is the effective one (org policy if present, else local). */
-function pushEgressConfig(cfg: ExtConfig, mode: Action) {
+ *  enforcement `mode` is the effective one (org policy if present, else local);
+ *  `apiIncludes` scopes the backstop to the site's prompt-submission endpoint. */
+function pushEgressConfig(cfg: ExtConfig, mode: Action, apiIncludes: string[]) {
   try {
     window.postMessage(
       {
@@ -231,6 +232,7 @@ function pushEgressConfig(cfg: ExtConfig, mode: Action) {
           guard: cfg.egressGuard,
           mode,
           ignoreUrl: cfg.controlPlaneUrl,
+          apiIncludes,
         },
       },
       "*",

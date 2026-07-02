@@ -9,6 +9,13 @@ export interface SiteConfig {
   hostIncludes: string[];
   inputSelectors: string[];
   submitSelectors: string[];
+  /**
+   * URL substrings identifying the site's actual prompt-submission request(s).
+   * The MAIN-world egress backstop only inspects requests whose URL matches one
+   * of these — so it never trips on the site's own telemetry/session traffic.
+   * If omitted, egress falls back to a generic chat-endpoint heuristic.
+   */
+  apiIncludes?: string[];
 }
 
 // Tried on every site in addition to any site-specific selectors.
@@ -41,6 +48,9 @@ export const SITES: SiteConfig[] = [
     hostIncludes: ["chat.openai.com", "chatgpt.com"],
     inputSelectors: ["#prompt-textarea", ...GENERIC_INPUT_SELECTORS],
     submitSelectors: ["button[data-testid='send-button']", ...GENERIC_SUBMIT_SELECTORS],
+    // POST /backend-api/conversation (and /backend-api/f/conversation) carry the
+    // prompt; everything else under /backend-api is session/telemetry — skip it.
+    apiIncludes: ["/conversation"],
   },
   {
     id: "grok",
@@ -49,6 +59,7 @@ export const SITES: SiteConfig[] = [
     hostIncludes: ["grok.com", "grok.x.ai", "x.ai", "x.com/i/grok", "twitter.com/i/grok"],
     inputSelectors: ["textarea", "div[contenteditable='true']", ...GENERIC_INPUT_SELECTORS],
     submitSelectors: ["button[aria-label*='Grok']", "button[type='submit']", ...GENERIC_SUBMIT_SELECTORS],
+    apiIncludes: ["/conversation", "/app-chat", "/responses"],
   },
   {
     id: "gemini",
@@ -56,6 +67,7 @@ export const SITES: SiteConfig[] = [
     hostIncludes: ["gemini.google.com", "aistudio.google.com"],
     inputSelectors: ["div.ql-editor[contenteditable='true']", ...GENERIC_INPUT_SELECTORS],
     submitSelectors: ["button.send-button", ...GENERIC_SUBMIT_SELECTORS],
+    apiIncludes: ["StreamGenerate", "GenerateContent", "generateContent", "batchexecute"],
   },
   {
     id: "claude",
@@ -63,6 +75,7 @@ export const SITES: SiteConfig[] = [
     hostIncludes: ["claude.ai"],
     inputSelectors: ["div[contenteditable='true']", ...GENERIC_INPUT_SELECTORS],
     submitSelectors: GENERIC_SUBMIT_SELECTORS,
+    apiIncludes: ["/completion", "/chat_conversations"],
   },
   generic("copilot", "Microsoft Copilot", ["copilot.microsoft.com", "m365.cloud.microsoft"]),
   generic("perplexity", "Perplexity", ["perplexity.ai"]),

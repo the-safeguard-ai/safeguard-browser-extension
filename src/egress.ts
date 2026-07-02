@@ -23,11 +23,19 @@ interface EgressConfig {
   guard: boolean; // egress backstop on/off
   mode: Action; // redact | block | flag
   ignoreUrl: string; // control-plane URL — never inspect our own telemetry
+  apiIncludes: string[]; // URL substrings of the site's prompt-submission endpoint(s)
 }
 
-// Safe defaults until the isolated content script pushes real config: protect
-// by default (guard on, block on detect) so there is no unguarded window.
-let cfg: EgressConfig = { enabled: true, guard: true, mode: "redact", ignoreUrl: "" };
+// Safe defaults until the isolated content script pushes real config. Note the
+// backstop only acts in block/flag mode (see `guarding`): in redact mode the
+// on-page content script owns enforcement, so the wire backstop stands down.
+let cfg: EgressConfig = { enabled: true, guard: true, mode: "redact", ignoreUrl: "", apiIncludes: [] };
+
+// A prompt-submission endpoint, when the site provides no explicit apiIncludes.
+// Deliberately narrow to chat/generation verbs so we don't trip on the site's
+// analytics/session/telemetry traffic (the source of false positives).
+const GENERIC_API_RE =
+  /(conversation|chat|completion|complete|messages?|generate|prompt|assistant|responses?|inference)/i;
 
 // ── Bridge to the isolated content script ────────────────────────────────────
 window.addEventListener("message", (e: MessageEvent) => {
@@ -60,13 +68,17 @@ function report(kind: "block" | "flag", url: string, labels: string[], count: nu
   }
 }
 
+// The wire backstop is active only for block/flag policies. In redact mode the
+// content script rewrites the prompt in-page before send; hard-blocking (the
+// only thing this layer can do — it never mutates bodies) would contradict
+// "redact" and break the send, so the backstop stands down.
 function guarding(): boolean {
-  return cfg.enabled && cfg.guard;
+  return cfg.enabled && cfg.guard && cfg.mode !== "redact";
 }
 
-/** flag mode observes only; redact/block hard-stop at the wire. */
+/** Only an explicit block policy hard-stops at the wire; flag observes/reports. */
 function shouldBlock(): boolean {
-  return cfg.mode !== "flag";
+  return cfg.mode === "block";
 }
 
 function isIgnored(url: string): boolean {
@@ -76,6 +88,17 @@ function isIgnored(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Only inspect the site's actual prompt-submission request(s). Everything else a
+ * page fetches (session, telemetry, feature flags, history loads) is skipped, so
+ * the backstop can't false-positive on IDs/timestamps in unrelated traffic.
+ */
+function shouldInspect(url: string): boolean {
+  if (isIgnored(url)) return false;
+  if (cfg.apiIncludes.length) return cfg.apiIncludes.some((p) => url.includes(p));
+  return GENERIC_API_RE.test(url);
 }
 
 /** Returns offending findings for a textual body, or null if clean / not text. */
@@ -114,7 +137,7 @@ window.fetch = function (
         : input instanceof URL
           ? input.href
           : (input as Request).url;
-    if (isIgnored(url)) return passthrough();
+    if (!shouldInspect(url)) return passthrough();
 
     // Body may be in init, or carried on a Request object. The init/string case
     // is synchronous (the common path for chat APIs). Request-object bodies need
@@ -179,7 +202,7 @@ xhrProto.send = function (this: SgXHR, body?: Document | XMLHttpRequestBodyInit 
   try {
     if (guarding()) {
       const url = this.__sgUrl ?? "";
-      if (!isIgnored(url)) {
+      if (shouldInspect(url)) {
         const text = bodyToText(body);
         if (text != null) {
           const hit = inspect(text);
