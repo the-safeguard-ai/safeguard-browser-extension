@@ -1,0 +1,51 @@
+name: publish
+
+# Opt-in store upload. Runs on a version tag (or manually) only when the repo
+# variable PUBLISH_ENABLED == 'true' and the store credentials are set as secrets.
+# See PUBLISHING.md for the required accounts/secrets. Until enabled, publish
+# manually — this workflow is a no-op.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  chrome:
+    if: ${{ vars.PUBLISH_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run build
+      - name: Package Chrome zip
+        run: (cd dist && zip -r ../safeguard-chrome.zip .)
+      - name: Upload to Chrome Web Store
+        uses: mnao305/chrome-extension-upload@v5.0.0
+        with:
+          file-path: safeguard-chrome.zip
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          publish: true
+
+  firefox:
+    if: ${{ vars.PUBLISH_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install
+      - run: bun run build
+      - name: Sign & submit to AMO (listed)
+        run: |
+          bunx web-ext@latest sign \
+            --channel listed \
+            --source-dir dist-firefox \
+            --api-key "${{ secrets.AMO_JWT_ISSUER }}" \
+            --api-secret "${{ secrets.AMO_JWT_SECRET }}"
