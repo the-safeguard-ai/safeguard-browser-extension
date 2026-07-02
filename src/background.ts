@@ -1,3 +1,4 @@
+import { api } from "./browser-api";
 // Service worker: forwards Shadow AI events to the control-plane. Auth is
 // preferred via the signed-in user's JWT (auto-linked to their org); falls back
 // to an IT-provisioned org key. Keeps a local rolling count for the popup.
@@ -8,8 +9,8 @@ import { syncOrgPolicy } from "./policy";
 
 // Pull the org's configured DLP policy on install and browser startup so the
 // in-browser engine matches the dashboard from the first page load (best-effort).
-chrome.runtime.onInstalled.addListener(() => void syncOrgPolicy());
-chrome.runtime.onStartup.addListener(() => void syncOrgPolicy());
+api.runtime.onInstalled.addListener(() => void syncOrgPolicy());
+api.runtime.onStartup.addListener(() => void syncOrgPolicy());
 
 interface ShadowEvent {
   site: string;
@@ -22,7 +23,7 @@ interface ShadowEvent {
   at: string;
 }
 
-chrome.runtime.onMessage.addListener((msg: { type: string; event?: ShadowEvent }) => {
+api.runtime.onMessage.addListener((msg: { type: string; event?: ShadowEvent }) => {
   if (msg.type === "shadow_event" && msg.event) void handleEvent(msg.event);
   return false;
 });
@@ -66,10 +67,10 @@ async function post(url: string, body: string, authHeader: Record<string, string
 }
 
 async function bumpLocalStats(event: ShadowEvent) {
-  const { stats } = await chrome.storage.local.get({ stats: { total: 0, byLabel: {} } });
+  const { stats } = await api.storage.local.get({ stats: { total: 0, byLabel: {} } });
   stats.total += event.count;
   for (const label of event.labels) {
     stats.byLabel[label] = (stats.byLabel[label] ?? 0) + 1;
   }
-  await chrome.storage.local.set({ stats });
+  await api.storage.local.set({ stats });
 }

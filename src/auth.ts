@@ -1,3 +1,4 @@
+import { api } from "./browser-api";
 // Extension account auth. Non-technical users simply sign in with their
 // SafeGuard email + password; the extension stores tokens and auto-links to
 // their org. (IT can alternatively pre-seed an org key in config for zero-touch
@@ -16,13 +17,13 @@ export interface AuthState {
 const AUTH_KEY = "auth";
 
 export async function getAuth(): Promise<AuthState | null> {
-  const { auth } = await chrome.storage.local.get(AUTH_KEY);
+  const { auth } = await api.storage.local.get(AUTH_KEY);
   return (auth as AuthState) ?? null;
 }
 
 async function setAuth(auth: AuthState | null) {
-  if (auth) await chrome.storage.local.set({ [AUTH_KEY]: auth });
-  else await chrome.storage.local.remove(AUTH_KEY);
+  if (auth) await api.storage.local.set({ [AUTH_KEY]: auth });
+  else await api.storage.local.remove(AUTH_KEY);
 }
 
 export async function login(email: string, password: string): Promise<AuthState> {

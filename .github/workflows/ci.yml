@@ -18,14 +18,18 @@ jobs:
       - run: bun run typecheck
       - run: bun test
       - run: bun run build
-      - name: Package MV3 zip
+      - name: Package MV3 zips (Chrome + Firefox)
         if: startsWith(github.ref, 'refs/tags/v')
-        run: cd dist && zip -r ../safeguard-browser-extension.zip . && cd ..
-      - name: Attach zip to release
+        run: |
+          (cd dist && zip -r ../safeguard-chrome.zip .)
+          (cd dist-firefox && zip -r ../safeguard-firefox.zip .)
+      - name: Attach zips to release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: safeguard-browser-extension.zip
+          files: |
+            safeguard-chrome.zip
+            safeguard-firefox.zip
 
   secret-scan:
     runs-on: ubuntu-latest

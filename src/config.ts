@@ -1,4 +1,5 @@
-// Extension configuration, persisted in chrome.storage.sync. IT can pre-seed
+import { api } from "./browser-api";
+// Extension configuration, persisted in api.storage.sync. IT can pre-seed
 // these via managed storage (enterprise policy) so rollout needs no user input.
 
 import type { Action } from "./dlp";
@@ -16,7 +17,7 @@ export const CLOUD_CONTROL_PLANE = "https://api.thesafeguard.ai";
 /** Org tenants live at https://<slug>.thesafeguard.ai unless a full URL is given. */
 export const CLOUD_ORG_BASE = "thesafeguard.ai";
 
-/** What actually lives in chrome.storage.sync. */
+/** What actually lives in api.storage.sync. */
 export interface StoredConfig {
   deployment: Deployment;
   /** organization mode: assigned tenant URL or bare slug. */
@@ -80,11 +81,11 @@ export function resolveControlPlaneUrl(c: StoredConfig): string {
 }
 
 export async function getConfig(): Promise<ExtConfig> {
-  const stored = (await chrome.storage.sync.get(DEFAULT_CONFIG)) as StoredConfig;
+  const stored = (await api.storage.sync.get(DEFAULT_CONFIG)) as StoredConfig;
   const merged = { ...DEFAULT_CONFIG, ...stored };
   return { ...merged, controlPlaneUrl: resolveControlPlaneUrl(merged) };
 }
 
 export async function setConfig(patch: Partial<StoredConfig>): Promise<void> {
-  await chrome.storage.sync.set(patch);
+  await api.storage.sync.set(patch);
 }

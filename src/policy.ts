@@ -1,3 +1,4 @@
+import { api } from "./browser-api";
 // Org DLP policy sync. The extension ships with a sensible default policy, but
 // once a user signs in (or IT seeds an org key) it pulls the org's configured
 // detectors + enforcement mode from the control-plane so in-browser enforcement
@@ -19,7 +20,7 @@ const KEY = "orgPolicy";
 
 export async function getCachedOrgPolicy(): Promise<OrgPolicy | null> {
   try {
-    const { [KEY]: p } = await chrome.storage.local.get(KEY);
+    const { [KEY]: p } = await api.storage.local.get(KEY);
     return (p as OrgPolicy) ?? null;
   } catch {
     return null;
@@ -28,7 +29,7 @@ export async function getCachedOrgPolicy(): Promise<OrgPolicy | null> {
 
 export async function clearOrgPolicy(): Promise<void> {
   try {
-    await chrome.storage.local.remove(KEY);
+    await api.storage.local.remove(KEY);
   } catch {
     /* ignore */
   }
@@ -79,7 +80,7 @@ export async function syncOrgPolicy(): Promise<OrgPolicy | null> {
     fetchedAt: new Date().toISOString(),
   };
   try {
-    await chrome.storage.local.set({ [KEY]: policy });
+    await api.storage.local.set({ [KEY]: policy });
   } catch {
     /* ignore */
   }

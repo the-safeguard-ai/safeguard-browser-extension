@@ -1,3 +1,4 @@
+import { api } from "./browser-api";
 // Content script: enforces DLP on AI sites BEFORE data leaves the page.
 //
 // Design (after real-world tuning):
@@ -6,7 +7,7 @@
 //     replacement avoids the "redacted + original both present" duplication.
 //   • The hard guarantee is SUBMIT BLOCKING: on Enter / send-click we re-scan
 //     the actual current text and stop the send if anything sensitive remains.
-//   • Enforce first, report last; never let a chrome.* failure abort protection.
+//   • Enforce first, report last; never let a api.* failure abort protection.
 
 import { getConfig, type ExtConfig } from "./config";
 import { scan, type Action, type Policy } from "./dlp";
@@ -18,7 +19,7 @@ if (site) void init(site);
 
 function alive(): boolean {
   try {
-    return !!chrome.runtime?.id;
+    return !!api.runtime?.id;
   } catch {
     return false;
   }
@@ -46,7 +47,7 @@ async function init(site: SiteConfig) {
   });
 
   try {
-    chrome.storage.onChanged.addListener(async () => {
+    api.storage.onChanged.addListener(async () => {
       try {
         cfg = await getConfig();
         ({ policies, mode } = resolvePolicies(await getCachedOrgPolicy(), cfg.mode));
@@ -60,7 +61,7 @@ async function init(site: SiteConfig) {
   }
 
   // ── Network egress backstop bridge ──────────────────────────────────────────
-  // egress.ts runs in the MAIN world and can't read chrome.storage, so we push
+  // egress.ts runs in the MAIN world and can't read api.storage, so we push
   // config to it and relay its block/flag events into telemetry + a banner.
   pushEgressConfig(cfg, mode, site.apiIncludes ?? []);
   window.addEventListener("message", (e: MessageEvent) => {
@@ -257,7 +258,7 @@ function reportSummary(
 ) {
   if (!alive()) return;
   try {
-    chrome.runtime.sendMessage({
+    api.runtime.sendMessage({
       type: "shadow_event",
       event: {
         site: site.id,

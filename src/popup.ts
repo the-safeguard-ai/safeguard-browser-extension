@@ -1,3 +1,4 @@
+import { api } from "./browser-api";
 import { getAuth, login, logout } from "./auth";
 import { clearOrgPolicy, syncOrgPolicy } from "./policy";
 import { getConfig, setConfig, type Deployment } from "./config";
@@ -30,7 +31,7 @@ async function render() {
 
   if (auth || itMode) {
     $("org").textContent = auth ? `Organization: ${auth.orgName || "—"}` : "Linked via IT key";
-    const { stats } = await chrome.storage.local.get({ stats: { total: 0, byLabel: {} } });
+    const { stats } = await api.storage.local.get({ stats: { total: 0, byLabel: {} } });
     $("total").textContent = String(stats.total);
     const breakdown = $("breakdown");
     breakdown.innerHTML = "";
@@ -83,7 +84,7 @@ $("signout").addEventListener("click", async () => {
 });
 
 for (const id of ["options-link", "options-link2"]) {
-  $(id).addEventListener("click", () => chrome.runtime.openOptionsPage());
+  $(id).addEventListener("click", () => api.runtime.openOptionsPage());
 }
 
 void render();
